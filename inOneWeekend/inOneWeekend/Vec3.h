@@ -62,6 +62,13 @@ public:
 		return Vec3(RandomDouble(min, max), RandomDouble(min, max), RandomDouble(min, max));
 	}
 
+	bool IsNearZero() const {
+		const auto s = 1e-8;
+		return (std::fabs(e[0]) < s) && (std::fabs(e[1]) < s) && (std::fabs(e[2]) < s);
+	}
+
+	
+
 
 private:
 	double e[3];
@@ -139,4 +146,27 @@ inline Vec3 RandomInHemisphere(const Vec3& normal)
 	Vec3 inUnitSphere = RandomInUnitSphere();
 	inUnitSphere = DotProduct(inUnitSphere, normal) > 0 ? inUnitSphere : -inUnitSphere;
 	return inUnitSphere;
+}
+
+inline Vec3 Reflect(const Vec3& v, const Vec3& n)
+{
+	return v - 2 * DotProduct(v, n) * n;
+}
+
+inline Vec3 Refract(const Vec3& uv, const Vec3& n, double etaiOverEtat)
+{
+	auto cosTheta = std::fmin(DotProduct(-uv, n), 1.0);
+	Vec3 rOutPerp = etaiOverEtat * (uv + cosTheta * n);
+	Vec3 rOutParallel = -sqrt(std::fabs(1.0 - rOutPerp.LengthSquared())) * n;
+	return rOutPerp + rOutParallel;
+}
+
+inline Vec3 RandomInUnitDisk()
+{
+	while (true)
+	{
+		auto p = Vec3(RandomDouble(-1, 1), RandomDouble(-1, 1), 0);
+		if (p.LengthSquared() >= 1) continue;
+		return p;
+	}
 }

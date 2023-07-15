@@ -11,7 +11,7 @@ const double pi = 3.1415926535897932385; //Try to replace pi later (tau or turns
 
 
 //Utility Functions
-inline double DegreesToRadius(double degrees){ return degrees * pi / 180.0; }
+inline double DegreesToRadians(double degrees){ return degrees * pi / 180.0; }
 inline double RandomDouble()
 {
 	static std::minstd_rand eng{std::random_device{}()};
