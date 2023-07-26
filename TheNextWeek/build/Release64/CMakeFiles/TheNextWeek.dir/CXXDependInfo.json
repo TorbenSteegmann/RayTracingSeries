@@ -1,0 +1,18 @@
+{
+	"bmi-installation" : null,
+	"compiler-id" : "MSVC",
+	"config" : "Release",
+	"cxx-modules" : {},
+	"dir-cur-bld" : "C:/Users/steeg/source/repos/rayTracingSeries/TheNextWeek/build/Release64",
+	"dir-cur-src" : "C:/Users/steeg/source/repos/rayTracingSeries/TheNextWeek",
+	"dir-top-bld" : "C:/Users/steeg/source/repos/rayTracingSeries/TheNextWeek/build/Release64",
+	"dir-top-src" : "C:/Users/steeg/source/repos/rayTracingSeries/TheNextWeek",
+	"exports" : [],
+	"include-dirs" : 
+	[
+		"C:\\Users\\steeg\\source\\repos\\rayTracingSeries\\TheNextWeek\\TheNextWeek"
+	],
+	"language" : "CXX",
+	"linked-target-dirs" : [],
+	"module-dir" : "C:/Users/steeg/source/repos/rayTracingSeries/TheNextWeek/build/Release64/CMakeFiles/TheNextWeek.dir"
+}

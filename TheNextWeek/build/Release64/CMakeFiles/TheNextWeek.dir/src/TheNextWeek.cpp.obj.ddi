@@ -1,0 +1,13 @@
+{
+    "version": 1,
+    "revision": 0,
+    "rules": [
+        {
+            "primary-output": "CMakeFiles\\TheNextWeek.dir\\src\\TheNextWeek.cpp.obj",
+            "outputs": [
+                "CMakeFiles\\TheNextWeek.dir\\src\\TheNextWeek.cpp.obj.ddi"
+            ],
+            "requires": []
+        }
+    ]
+}
