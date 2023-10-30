@@ -1,12 +1,14 @@
 #pragma once
 
-#include "rtWeekend.h"
 #include "Ray.h"
 #include "Vec3.h"
+#include "rtWeekend.h"
 
 class Camera
 {
 public:
+    Camera() = default;
+
     Camera(Point3 const& lookFrom,
            Point3 const& lookAt,
            Vec3 const& vUp, // v=vertical
@@ -32,23 +34,20 @@ public:
         lensRadius = aperture / 2;
     }
 
-        [[nodiscard]] Ray GetRay(double s, double t) const
-	{
-		Vec3 rd = lensRadius * RandomInUnitDisk();
-		Vec3 offset = u * rd.x() + v * rd.y();
-		return
-                {
-				origin + offset, 
-				lowerLeftCorner + s * horizontal + t * vertical - origin - offset
-                };
-	}
+    [[nodiscard]] Ray GetRay(double s, double t) const
+    {
+        Vec3 rd = lensRadius * RandomInUnitDisk();
+        Vec3 offset = u * rd.x() + v * rd.y();
+        auto time = RandomDouble();
+
+        return {origin + offset, lowerLeftCorner + s * horizontal + t * vertical - origin - offset, time};
+    }
 
 private:
-	Point3 origin;
-	Point3 lowerLeftCorner;
-	Vec3 horizontal;
-	Vec3 vertical;
-	Vec3 u, v, w;
-	double lensRadius;
+    Point3 origin;
+    Point3 lowerLeftCorner;
+    Vec3 horizontal;
+    Vec3 vertical;
+    Vec3 u, v, w;
+    double lensRadius;
 };
-

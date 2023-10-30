@@ -6,19 +6,19 @@
 class Lambertian : public Material
 {
 public:
-	explicit Lambertian(const Color& a) : albedo(a) {}
+    explicit Lambertian(Color const& a) : albedo(a) {}
 
-	bool Scatter
-	(const Ray& rIn, const HitRecord& rec, Color& attenuation, Ray& scattered) const override
-	{
-		auto scatterDirection = rec.normal + RandomUnitVector();
+    bool Scatter(Ray const& rIn, HitRecord const& rec, Color& attenuation, Ray& scattered) const override
+    {
+        auto scatterDirection = rec.normal + RandomUnitVector();
 
-		if (scatterDirection.IsNearZero()) scatterDirection = rec.normal;
+        if (scatterDirection.IsNearZero())
+            scatterDirection = rec.normal;
 
-		scattered = Ray(rec.hitPoint, scatterDirection);
-		attenuation = albedo;
-		return true;
-	}
+        scattered = Ray(rec.hitPoint, scatterDirection);
+        attenuation = albedo;
+        return true;
+    }
 
 private:
 	Color albedo;

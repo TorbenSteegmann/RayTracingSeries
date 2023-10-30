@@ -9,9 +9,19 @@ add_executable(TheNextWeek
 
         src/TheNextWeek.cpp
 
+        src/AxisAlignedBoundingBox.h
+
+        src/AaRect.h
+
+        src/Bvh.h
+
+        src/Box.h
+
         src/Camera.h
 
         src/Color.h
+
+        src/ConstantDensityVolume.h
 
         src/Dielectric.h
 
@@ -27,12 +37,20 @@ add_executable(TheNextWeek
 
         src/Metal.h
 
+        src/Perlin.h
+
         src/Ray.h
 
         src/RTWeekend.h
+
+        src/RtwStbImage.h
 
         src/Scenes.h
 
         src/Sphere.h
 
-        src/Vec3.h)
+        src/Textures.h
+
+        src/Vec3.h
+
+        )

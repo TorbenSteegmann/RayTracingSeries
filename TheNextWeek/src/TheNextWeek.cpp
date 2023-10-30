@@ -6,8 +6,6 @@
 // 1. Denoising with Intel Open Image Denoise
 // 2. Live Rendering and a proper UI with Walnut
 // 3. GPU Rendering with Vulcan
-// The first two points can be implemented without the need of changing the source code significantly, however as they
-// add a lot of compilation time I have decided to postpone them anyways.
 
 #include <chrono>
 #include <future>
@@ -43,35 +41,39 @@ void DisplayProgess(uint32_t PACKAGE_TOTAL, uint32_t package)
 }
 
 
-Color RayColor(Ray const& r, Hittable const& world, int depth) // Why is this not in Color class?
+Color RayColor(Ray const& r, HittableList const& world, int depth) // Why is this not in Color class?
 {
     if (depth <= 0)
         return {0, 0, 0};
 
     HitRecord rec;
-    if (world.Hit(r, 0.001, infinity, rec))
+
+    if (!world.Hit(r, 0.001, infinity, rec))
+        return world.BackgroundColor();
+
+    Ray scattered;
+    Color attenuation;
+    Color emitted = rec.matPtr->Emitted(rec.u, rec.v, rec.hitPoint);
+
+    if (!rec.matPtr->Scatter(r, rec, attenuation, scattered))
     {
-        Ray scattered;
-        Color attenuation;
-        if (rec.matPtr -> Scatter(r, rec, attenuation, scattered))
-        {
-            return attenuation * RayColor(scattered, world, depth - 1);
-        }
-        return { 0, 0, 0 };
+        return emitted;
     }
-    Vec3 unitDirection = UnitVector(r.direction());
+    return emitted + attenuation * RayColor(scattered, world, depth - 1);
+
+    Vec3 unitDirection = UnitVector(r.Direction());
     auto t = 0.5 * (unitDirection.y() + 1.0);
     return (1.0 - t) * Color(1.0, 1.0, 1.0) + t * Color(0.5, 0.7, 1.0);
 }
 
 Camera CameraSetup(double aspectRatio)
 {
-    Point3 lookFrom(13, 2, 3);
+    Point3 lookFrom(0, 0, -7);
     Point3 lookAt(0, 0, 0);
     Vec3 vUp(0, 1, 0);
-    auto focusDist = 10.0;
-    auto aperture = 0.1;
-    auto fov = 20;
+    auto focusDist = 40.0;
+    auto aperture = 0.0;
+    auto fov = 40;
 
     Camera cam(lookFrom, lookAt, vUp, fov, aspectRatio, aperture, focusDist);
 
@@ -91,7 +93,9 @@ void Render(uint32_t packageNumber,
 {
     auto startHeight = (imageHeight - 1) - (((packageNumber * packageWidth) / imageWidth) * packageHeight);
     auto startWidth = (packageNumber * packageWidth) % imageWidth;
-    for (auto j = startHeight; j > (startHeight - packageHeight); --j)
+    auto endHeight = int(startHeight) - int(packageHeight);
+
+    for (auto j = int(startHeight); j > endHeight; --j)
     {
         for (auto i = startWidth; i < (startWidth + packageWidth); ++i)
         {
@@ -119,28 +123,28 @@ int main()
 
     // Image
 
-    constexpr auto ASPECT_RATIO = 3.0 / 2.0;
-    int const IMAGE_WIDTH = 1200;
-    constexpr int IMAGE_HEIGHT = static_cast<int>(IMAGE_WIDTH/ASPECT_RATIO);
-    constexpr int TOTAL_PIXELS = IMAGE_HEIGHT * IMAGE_WIDTH;
+    constexpr auto ASPECT_RATIO = 1.0;
+    int const IMAGE_WIDTH = 600;
+    constexpr auto IMAGE_HEIGHT = static_cast<int>(IMAGE_WIDTH / ASPECT_RATIO);
+    // int const IMAGE_HEIGHT = 800;
+    constexpr auto TOTAL_PIXELS = IMAGE_HEIGHT * IMAGE_WIDTH;
 
-    int const SAMPLES_PER_PIXEL = 1;
-    int const MAX_DEPTH = 1;
+    int const SAMPLES_PER_PIXEL = 200;
+    int const MAX_DEPTH = 69;
 
     int const PACKAGE_WIDTH = IMAGE_WIDTH * 0.01;
     int const PACKAGE_HEIGHT = IMAGE_HEIGHT * 0.01;
 
     const uint32_t PACKAGE_TOTAL = 100 * 100;
 
-
     // World
-
-    auto world = RandomScene();
+    Camera cam;
+    auto world = EarthScene();
 
 
     // Camera
 
-    auto cam = CameraSetup(ASPECT_RATIO);
+    cam = CameraSetup(ASPECT_RATIO);
 
 
     // Render
@@ -148,17 +152,17 @@ int main()
     std::cout << "P3\n" << IMAGE_WIDTH << ' ' << IMAGE_HEIGHT << "\n255\n";
 
     std::vector<uint8_t> colors(TOTAL_PIXELS * 3);
-    int const MAX_THREADS = (int)std::thread::hardware_concurrency();
-    std::vector<std::future<void>> workers { };
+    int const MAX_THREADS = (int)std::thread::hardware_concurrency() / 2;
+    // int const MAX_THREADS = 1;
+    std::vector<std::future<void>> workers{};
     for (uint32_t i = 0; i < PACKAGE_TOTAL; ++i)
     {
-        DisplayProgess(PACKAGE_TOTAL, i+1);
+        DisplayProgess(PACKAGE_TOTAL, i + 1);
 
         if (workers.size() < MAX_THREADS)
         {
-            workers.emplace_back(
-                std::async(
-                    std::launch::async, Render, i, PACKAGE_WIDTH, PACKAGE_HEIGHT, IMAGE_HEIGHT, IMAGE_WIDTH, SAMPLES_PER_PIXEL, MAX_DEPTH, cam, world, std::ref(colors)));
+            workers.emplace_back(std::async(std::launch::async, Render, i, PACKAGE_WIDTH, PACKAGE_HEIGHT, IMAGE_HEIGHT, IMAGE_WIDTH,
+                                            SAMPLES_PER_PIXEL, MAX_DEPTH, cam, world, std::ref(colors)));
             continue;
         }
 
@@ -167,16 +171,28 @@ int main()
         {
             if (workers[j].wait_for(0ms) == std::future_status::ready)
             {
-                workers[j] = std::async(std::launch::async, Render, i, PACKAGE_WIDTH, PACKAGE_HEIGHT, IMAGE_HEIGHT, IMAGE_WIDTH, SAMPLES_PER_PIXEL, MAX_DEPTH, cam, world, std::ref(colors));
+                workers[j] = std::async(std::launch::async, Render, i, PACKAGE_WIDTH, PACKAGE_HEIGHT, IMAGE_HEIGHT, IMAGE_WIDTH, SAMPLES_PER_PIXEL,
+                                        MAX_DEPTH, cam, world, std::ref(colors));
                 break;
             }
             j = (j + 1) % MAX_THREADS;
         }
     }
 
-    for (uint32_t i = 0; i < colors.size(); i = i+3)
+    // wait for remaining threads to finish
+    int j = 0;
+    while (j < MAX_THREADS)
     {
-        std::cout << (int)colors[i] << ' ' << (int)colors[i+1] << ' ' << (int)colors[i+2] << '\n';
+        if (!(workers[j].wait_for(0ms) == std::future_status::ready))
+        {
+            continue;
+        }
+        ++j;
+    }
+
+    for (uint32_t i = 0; i < colors.size(); i = i + 3)
+    {
+        std::cout << (int)colors[i] << ' ' << (int)colors[i + 1] << ' ' << (int)colors[i + 2] << '\n';
     }
 
     auto endTime = std::chrono::high_resolution_clock::now();
