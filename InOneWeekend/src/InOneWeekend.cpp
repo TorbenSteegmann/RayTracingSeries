@@ -4,8 +4,7 @@
 // of them until after the completion of "Ray Tracing the Rest of your Life". For now, I have deviated only in the
 // implementation of Multi-Threading to cut down on the long render times. Future plans include the implementation of:
 // 1. Denoising with Intel Open Image Denoise
-// 2. Live Rendering and a proper UI with Walnut
-// 3. GPU Rendering with Vulcan
+// 2. Live Rendering and a proper UI 
 
 #include <chrono>
 #include <future>
